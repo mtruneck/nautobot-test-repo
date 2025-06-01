@@ -1,5 +1,4 @@
 from nautobot.apps.jobs import Job, StringVar
-from nautobot.core.celery import register_jobs
 
 
 class HelloWorldJob(Job):
@@ -30,10 +29,3 @@ class HelloWorldJob(Job):
         
         # Return a success message
         return f"Successfully said hello to {name}!"
-
-
-# Register the job with Nautobot
-jobs = [HelloWorldJob]
-
-# This line is required to register the job with Nautobot's job system
-register_jobs(*jobs)
