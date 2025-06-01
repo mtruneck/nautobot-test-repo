@@ -49,17 +49,22 @@ class SemaphoreTaskRunner(Job):
         """
         The main execution method of the job.
         """
-        if data is None:
-            self.logger.error("No input data provided")
-            return "Failed: No input data provided"
+        # Initialize default values
+        semaphore_url = "http://semaphore:3000"
+        username = "admin"
+        password = "admin"
+        project_id = "1"
+        template_id = "1"
+        debug_mode = False
         
-        # Extract parameters from input data
-        semaphore_url = data.get("semaphore_url", "http://semaphore:3000")
-        username = data.get("username", "admin")
-        password = data.get("password", "admin")
-        project_id = data.get("project_id", "1")
-        template_id = data.get("template_id", "1")
-        debug_mode = data.get("debug_mode", False)
+        # Extract parameters from input data if provided
+        if data is not None:
+            semaphore_url = data.get("semaphore_url", semaphore_url)
+            username = data.get("username", username)
+            password = data.get("password", password)
+            project_id = data.get("project_id", project_id)
+            template_id = data.get("template_id", template_id)
+            debug_mode = data.get("debug_mode", debug_mode)
         
         # Log the start of the job
         self.logger.info(f"Starting Semaphore task runner for template {template_id} in project {project_id}")
