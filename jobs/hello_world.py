@@ -10,12 +10,13 @@ class HelloWorldJob(Job):
         description = "A simple job that says hello to the world"
         commit_default = False
 
-    # Input variables for the job
-    name = StringVar(
-        description="Your name",
-        default="World",
-        required=False
-    )
+    # Define class variables for job inputs
+    class InputVariables:
+        name = StringVar(
+            description="Your name",
+            default="World",
+            required=False
+        )
 
     def run(self, data=None, commit=None):
         """
