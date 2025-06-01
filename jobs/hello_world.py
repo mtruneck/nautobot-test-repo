@@ -136,8 +136,92 @@ class SemaphoreTaskRunner(Job):
             
             self.logger.success(f"Successfully started task with ID {task_id}, status: {task_status}")
             
-            # Return a success message with the task ID
-            return f"Successfully started Semaphore task with ID {task_id}, status: {task_status}"
+            # Monitor task until completion
+            self.logger.info(f"Monitoring task {task_id} until completion...")
+            
+            import time
+            max_attempts = 60  # Maximum number of attempts (10 minutes with 10-second intervals)
+            attempt = 0
+            completed_statuses = ["success", "error", "failed"]
+            
+            while attempt < max_attempts:
+                # Get task status
+                task_status_url = f"{semaphore_url}/api/project/{project_id}/tasks/{task_id}"
+                task_status_headers = {
+                    "accept": "application/json",
+                    "Cookie": f"semaphore={semaphore_cookie}"
+                }
+                
+                try:
+                    task_status_response = requests.get(
+                        task_status_url,
+                        headers=task_status_headers,
+                        verify=False
+                    )
+                    
+                    if task_status_response.status_code != 200:
+                        self.logger.warning(f"Failed to get task status: {task_status_response.status_code}")
+                        attempt += 1
+                        time.sleep(10)
+                        continue
+                    
+                    # Parse task status
+                    current_task = task_status_response.json()
+                    current_status = current_task.get("status")
+                    
+                    # Log current status
+                    self.logger.info(f"Task {task_id} status: {current_status} (attempt {attempt+1}/{max_attempts})")
+                    
+                    # Check if task is completed
+                    if current_status in completed_statuses:
+                        # Get task output
+                        self.logger.info(f"Task {task_id} completed with status: {current_status}")
+                        
+                        # Get task output/logs
+                        task_output_url = f"{semaphore_url}/api/project/{project_id}/tasks/{task_id}/output"
+                        task_output_headers = {
+                            "accept": "application/json",
+                            "Cookie": f"semaphore={semaphore_cookie}"
+                        }
+                        
+                        task_output_response = requests.get(
+                            task_output_url,
+                            headers=task_output_headers,
+                            verify=False
+                        )
+                        
+                        if task_output_response.status_code == 200:
+                            # Parse and log task output
+                            task_output = task_output_response.json()
+                            
+                            # Log summary of task output
+                            self.logger.info("Task Output Summary:")
+                            for output_line in task_output:
+                                output_time = output_line.get("time")
+                                output_type = output_line.get("type")
+                                output_output = output_line.get("output")
+                                
+                                if output_type == "play" or output_type == "task" or "fatal" in output_output.lower():
+                                    self.logger.info(f"[{output_time}] [{output_type}] {output_output}")
+                        else:
+                            self.logger.warning(f"Failed to get task output: {task_output_response.status_code}")
+                        
+                        # Return success or failure based on task status
+                        if current_status == "success":
+                            return f"Task {task_id} completed successfully"
+                        else:
+                            return f"Task {task_id} failed with status: {current_status}"
+                
+                except Exception as e:
+                    self.logger.error(f"Error checking task status: {str(e)}")
+                
+                # Increment attempt counter and wait before next check
+                attempt += 1
+                time.sleep(10)
+            
+            # If we've reached the maximum number of attempts, return a timeout message
+            self.logger.warning(f"Reached maximum monitoring attempts for task {task_id}. Last status: {current_status}")
+            return f"Task monitoring timed out after {max_attempts * 10} seconds. Last status: {current_status}"
             
         except Exception as e:
             self.logger.error(f"Error running Semaphore task: {str(e)}")
