@@ -194,15 +194,24 @@ class SemaphoreTaskRunner(Job):
                             # Parse and log task output
                             task_output = task_output_response.json()
                             
-                            # Log summary of task output
-                            self.logger.info("Task Output Summary:")
-                            for output_line in task_output:
-                                output_time = output_line.get("time")
-                                output_type = output_line.get("type")
-                                output_output = output_line.get("output")
+                            # Log the structure of the first output line for debugging
+                            if task_output and len(task_output) > 0:
+                                self.logger.info(f"Output structure example: {task_output[0]}")
+                            else:
+                                self.logger.info("Task output is empty")
                                 
-                                if output_type == "play" or output_type == "task" or "fatal" in output_output.lower():
-                                    self.logger.info(f"[{output_time}] [{output_type}] {output_output}")
+                            # Log summary of task output
+                            self.logger.info(f"Task Output Summary (total lines: {len(task_output)}):")
+                            
+                            # Print all output lines without filtering
+                            for i, output_line in enumerate(task_output):
+                                # Extract data with safe fallbacks
+                                output_time = output_line.get("time", "unknown")
+                                output_type = output_line.get("type", "unknown")
+                                output_output = output_line.get("output", "")
+                                
+                                # Log every line for complete output
+                                self.logger.info(f"Line {i+1}: [{output_time}] [{output_type}] {output_output}")
                         else:
                             self.logger.warning(f"Failed to get task output: {task_output_response.status_code}")
                         
