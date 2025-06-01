@@ -29,7 +29,7 @@ class HelloWorldJob(Job):
             name = data.get("name", "World")
         
         # Log a message that will be displayed in the job result
-        self.log_info(f"Hello, {name}!")
+        self.logger.info(f"Hello, {name}!")
         
         # Return a success message
         return f"Successfully said hello to {name}!"
