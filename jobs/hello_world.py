@@ -23,7 +23,10 @@ class HelloWorldJob(Job):
         The main execution method of the job.
         """
         # Extract the name from the input data
-        name = data.get("name", "World")
+        if data is None:
+            name = "World"
+        else:
+            name = data.get("name", "World")
         
         # Log a message that will be displayed in the job result
         self.log_info(f"Hello, {name}!")
