@@ -77,52 +77,17 @@ class RacomDeviceContextualPing(JobButtonReceiver):
         self.logger.info(summary)
         return summary
 
-    # This method is called by JobButtonReceiver's base run() method when triggered by a button.
     def receive_job_button(self, obj):
-        """
-        Handles job execution when triggered from a button on a Device or DeviceType page.
-        'obj' is the instance of the Device or DeviceType model.
-        """
-        self.logger.info(f"Job triggered by button for object: {obj} (type: {type(obj).__name__})")
-        devices_to_ping = Device.objects.none()
-
         if isinstance(obj, Device):
             self.logger.info(f"Context: Device - {obj.name}")
             devices_to_ping = Device.objects.filter(pk=obj.pk)
             return self._perform_ping(devices_to_ping)
-
         elif isinstance(obj, DeviceType):
             self.logger.info(f"Context: DeviceType - {obj.name}")
             devices_to_ping = Device.objects.filter(device_type=obj)
             return self._perform_ping(devices_to_ping)
-            
         else:
             self.logger.error(f"Unsupported object type for button trigger: {type(obj).__name__}")
             return f"Error: Job button called on unsupported object type {type(obj).__name__}."
-
-    # This method is called for manual runs (e.g., from the Jobs UI or API).
-    # 'data' is a dictionary of the validated InputVariables.
-    def run(self, data, commit=None): # Standard Job.run() signature
-        """
-        Handles job execution for manual runs.
-        'data' contains validated input variables: device_input and device_type_input.
-        """
-        self.logger.info("Job triggered manually or via API.")
-        devices_to_ping = Device.objects.none()
-
-        device_from_input = data.get("device_input")
-        device_type_from_input = data.get("device_type_input")
-
-        if device_from_input:
-            self.logger.info(f"Manual run: Pinging device from form input: {device_from_input}")
-            devices_to_ping = Device.objects.filter(pk=device_from_input.pk)
-        elif device_type_from_input:
-            self.logger.info(f"Manual run: Pinging devices of type from form input: {device_type_from_input}")
-            devices_to_ping = Device.objects.filter(device_type=device_type_from_input)
-        else:
-            self.logger.warning("Manual run: No specific device or device type provided. Please select an input.")
-            return "Manual run: Please specify a Device or Device Type to ping. No devices will be pinged."
-
-        return self._perform_ping(devices_to_ping)
 
 jobs.register_jobs(RacomDeviceContextualPing)
