@@ -1,12 +1,12 @@
 import requests
-from nautobot.apps.jobs import JobButtonReceiver, ObjectVar # JobButtonReceiver already inherits Job
+from nautobot.apps.jobs import JobButtonReceiver
 from nautobot.apps import jobs
 from nautobot.dcim.models import Device, DeviceType
 
 class RacomDeviceContextualPing(JobButtonReceiver):
     class Meta:
         name = "Racom Device Contextual Ping"
-        description = "Ping RACOM device(s) from Device or Device Type page, or manually."
+        description = "Ping RACOM device(s) from Device or Device Type page."
         commit_default = False
         # model attribute tells JobButtonReceiver which object types this button should appear on
         model = ["dcim.device", "dcim.devicetype"]
