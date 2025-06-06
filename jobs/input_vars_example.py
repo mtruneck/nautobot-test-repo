@@ -27,4 +27,4 @@ class InputVarsExampleJob(Job):
             return f"{greeting} Device selected: {data['device']}"
         return greeting
 
-job = InputVarsExampleJob
+jobs.register_jobs(InputVarsExampleJob)

@@ -80,4 +80,5 @@ class RacomDevicePing(Job):
         self.logger.info(summary)
         return summary
 
-job = RacomDevicePing
+jobs.register_jobs(RacomDevicePing)
+
