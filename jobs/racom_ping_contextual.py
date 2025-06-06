@@ -11,20 +11,6 @@ class RacomDeviceContextualPing(JobButtonReceiver):
         # model attribute tells JobButtonReceiver which object types this button should appear on
         model = ["dcim.device", "dcim.devicetype"]
 
-    # InputVariables are for the 'Run Job' form (manual execution)
-    # These are NOT used by receive_job_button directly but by the run() method.
-    device_input = ObjectVar(
-        model=Device,
-        required=False,
-        label="Device (for Manual Run)",
-        description="Specific device to ping (used when running job manually)."
-    )
-    device_type_input = ObjectVar(
-        model=DeviceType,
-        required=False,
-        label="Device Type (for Manual Run)",
-        description="Ping all devices of this Device Type (used when running job manually)."
-    )
 
     def _perform_ping(self, devices_to_ping):
         """
