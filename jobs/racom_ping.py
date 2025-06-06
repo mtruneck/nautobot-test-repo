@@ -13,26 +13,25 @@ class RacomDevicePing(Job):
         description = "Ping all RACOM devices in Nautobot using device_ping API call."
         commit_default = False
 
-    class InputVariables:
-        device = ObjectVar(
-            model=Device,
-            required=False,
-            description="Specific device to ping (optional)."
-        )
-        device_type = ObjectVar(
-            model=DeviceType,
-            required=False,
-            description="Ping all devices of this Device Type (optional)."
-        )
+    device = ObjectVar(
+        model=Device,
+        required=False,
+        description="Specific device to ping (optional)."
+    )
+    device_type = ObjectVar(
+        model=DeviceType,
+        required=False,
+        description="Ping all devices of this Device Type (optional)."
+    )
 
-    def run(self, data=None, commit=None):
+    def run(self, *, device=None, device_type=None, commit=None):
         # Determine which filter to use
-        if data and data.get("device"):
-            devices = Device.objects.filter(pk=data["device"].pk)
-            self.logger.info(f"Pinging single device: {data['device']}")
-        elif data and data.get("device_type"):
-            devices = Device.objects.filter(device_type=data["device_type"])
-            self.logger.info(f"Pinging all devices of type: {data['device_type']}")
+        if device:
+            devices = Device.objects.filter(pk=device.pk)
+            self.logger.info(f"Pinging single device: {device}")
+        elif device_type:
+            devices = Device.objects.filter(device_type=device_type)
+            self.logger.info(f"Pinging all devices of type: {device_type}")
         else:
             devices = Device.objects.all()
             self.logger.info("Pinging all devices.")
