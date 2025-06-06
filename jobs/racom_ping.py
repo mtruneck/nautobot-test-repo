@@ -1,7 +1,7 @@
 import requests
 import requests
-from nautobot.apps.jobs import Job
-from nautobot.dcim.models import Device
+from nautobot.apps.jobs import Job, ObjectVar
+from nautobot.dcim.models import Device, DeviceType
 
 class RacomDevicePing(Job):
     """
@@ -13,10 +13,29 @@ class RacomDevicePing(Job):
         commit_default = False
 
     class InputVariables:
-        pass  # No input variables needed for this job
+        device = ObjectVar(
+            model=Device,
+            required=False,
+            description="Specific device to ping (optional)."
+        )
+        device_type = ObjectVar(
+            model=DeviceType,
+            required=False,
+            description="Ping all devices of this Device Type (optional)."
+        )
 
     def run(self, data=None, commit=None):
-        devices = Device.objects.all()
+        # Determine which filter to use
+        if data and data.get("device"):
+            devices = Device.objects.filter(pk=data["device"].pk)
+            self.logger.info(f"Pinging single device: {data['device']}")
+        elif data and data.get("device_type"):
+            devices = Device.objects.filter(device_type=data["device_type"])
+            self.logger.info(f"Pinging all devices of type: {data['device_type']}")
+        else:
+            devices = Device.objects.all()
+            self.logger.info("Pinging all devices.")
+
         if not devices.exists():
             self.logger.info("No devices found in Nautobot.")
             return "No devices found in Nautobot."
@@ -32,7 +51,24 @@ class RacomDevicePing(Job):
             try:
                 resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, verify=False, timeout=10)
                 if resp.status_code == 200:
-                    self.logger.info(f"{device.name} ({domain}): API reachable.")
+                    try:
+                        json_data = resp.json()
+                        self.logger.debug(f"Response: {json_data}")
+                        # Accept as success if status==200 and msg contains OK
+                        if (
+                            str(json_data.get("status", "")) == "200"
+                            and "msg" in json_data
+                            and "OK" in json_data["msg"]
+                        ):
+                            self.logger.info(f"{device.name} ({domain}): API reachable and OK.")
+                            success_count += 1
+                        else:
+                            self.logger.warning(f"{device.name} ({domain}): API reachable but unexpected JSON content.")
+                            fail_count += 1
+                    except Exception as json_exc:
+                        self.logger.error(f"{device.name} ({domain}): Response is not valid JSON: {json_exc}")
+                        self.logger.debug(f"Raw response: {resp.text}")
+                        fail_count += 1
                 else:
                     self.logger.error(f"{device.name} ({domain}): API NOT reachable. Status: {resp.status_code}")
                     self.logger.debug(f"Response: {resp.text}")
