@@ -269,3 +269,6 @@ class HelloWorldJob(Job):
         
         # Return a success message
         return f"Successfully said hello to {name}!"
+
+# Register the job for Nautobot Git jobs discovery
+job = HelloWorldJob
