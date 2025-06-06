@@ -4,28 +4,18 @@ from nautobot.dcim.models import Device
 
 class InputVarsExampleJob(Job):
     class Meta:
-        name = "Input Vars Example Job"
-        description = "Demonstrates input variables in Nautobot v2.4+ jobs."
+        name = "Input Vars Example Job - Simple Who"
+        description = "Demonstrates a simple 'who' input variable."
         commit_default = False
 
-    class InputVariables:
-        name = StringVar(
-            description="Your name",
-            default="World",
-            required=False
-        )
-        device = ObjectVar(
-            model=Device,
-            required=False,
-            description="Device to operate on (optional)"
-        )
+    who = StringVar(
+        description="Whom should we greet?",
+        default="world"
+    )
 
-    def run(self, data=None, commit=None):
-        greeting = f"Hello, {data.get('name', 'World')}!"
+    def run(self, *, who):
+        greeting = f"Hello, {who}!"
         self.logger.info(greeting)
-        if data.get("device"):
-            self.logger.info(f"Device selected: {data['device']}")
-            return f"{greeting} Device selected: {data['device']}"
         return greeting
 
 jobs.register_jobs(InputVarsExampleJob)
