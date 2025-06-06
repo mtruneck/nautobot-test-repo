@@ -1,4 +1,5 @@
 from nautobot.apps.jobs import Job, StringVar, ObjectVar
+from nautobot.apps import jobs
 from nautobot.dcim.models import Device
 
 class InputVarsExampleJob(Job):

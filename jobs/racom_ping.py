@@ -1,6 +1,7 @@
 import requests
 import requests
 from nautobot.apps.jobs import Job, ObjectVar
+from nautobot.apps import jobs
 from nautobot.dcim.models import Device, DeviceType
 
 class RacomDevicePing(Job):

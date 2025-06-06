@@ -1,4 +1,5 @@
 from nautobot.apps.jobs import Job, StringVar, BooleanVar
+from nautobot.apps import jobs
 import requests
 import json
 
