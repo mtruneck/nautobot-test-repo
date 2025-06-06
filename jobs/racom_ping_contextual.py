@@ -59,7 +59,7 @@ class RacomDeviceContextualPing(JobButtonReceiver):
             devices_to_ping = Device.objects.filter(pk=obj.pk)
             return self._perform_ping(devices_to_ping)
         elif isinstance(obj, DeviceType):
-            self.logger.info(f"Context: DeviceType - {obj.name}")
+            self.logger.info(f"Context: DeviceType - {obj.model}")
             devices_to_ping = Device.objects.filter(device_type=obj)
             return self._perform_ping(devices_to_ping)
         else:
