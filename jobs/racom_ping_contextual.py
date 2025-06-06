@@ -37,18 +37,8 @@ class RacomDeviceContextualPing(JobButtonReceiver):
                 resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, verify=False, timeout=10)
                 
                 if resp.status_code == 200:
-                    try:
-                        json_data = resp.json()
-                        self.logger.debug(f"Device {dev_instance.name} ({domain}) - Response: {json_data}")
-                        if str(json_data.get("status", "")) == "200" and "msg" in json_data and "OK" in json_data["msg"]:
-                            self.logger.info(f"{dev_instance.name} ({domain}): API reachable and OK.")
-                            success_count += 1
-                        else:
-                            self.logger.warning(f"{dev_instance.name} ({domain}): API reachable but unexpected JSON content: {json_data.get('msg', 'N/A')}")
-                            fail_count += 1
-                    except requests.exceptions.JSONDecodeError as json_exc:
-                        self.logger.error(f"{dev_instance.name} ({domain}): Response is not valid JSON: {json_exc}. Raw response: {resp.text[:200]}...")
-                        fail_count += 1
+                    self.logger.info(f"{dev_instance.name} ({domain}): API reachable (HTTP 200).")
+                    success_count += 1
                 else:
                     self.logger.error(f"{dev_instance.name} ({domain}): API NOT reachable. Status: {resp.status_code}. Response: {resp.text[:200]}...")
                     fail_count += 1
