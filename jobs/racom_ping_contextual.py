@@ -3,7 +3,7 @@ from nautobot.apps.jobs import Job, JobButtonReceiver, ObjectVar
 from nautobot.apps import jobs
 from nautobot.dcim.models import Device, DeviceType
 
-class RacomDeviceContextualPing(Job, JobButtonReceiver):
+class RacomDeviceContextualPing(JobButtonReceiver):
     class Meta:
         name = "Racom Device Contextual Ping"
         description = "Ping RACOM device(s) from Device or Device Type page, or manually."
