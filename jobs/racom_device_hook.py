@@ -55,12 +55,68 @@ class RacomDeviceChangeHook(JobHookReceiver):
             except Exception as e:
                 self.logger.error(f"Could not extract station name from config: {e}")
                 raise Exception(f"Could not extract station name from config: {e}")
-            # --- Compare names ---
+            # --- Compare names and update if needed ---
             if nautobot_name != config_name:
-                msg = f"Device name mismatch: Nautobot='{nautobot_name}' vs DeviceConfig='{config_name}'"
-                self.logger.error(msg)
-                raise Exception(msg)
-            self.logger.info(f"Device name matches: '{nautobot_name}'")
+                msg = f"Device name mismatch: Nautobot='{nautobot_name}' vs DeviceConfig='{config_name}'. Updating device config..."
+                self.logger.warning(msg)
+                # Update the config with the Nautobot name
+                config_json["result"]["config_data"]["main"]["RR_StationName"] = nautobot_name
+                # Deploy updated config
+                deploy_payload = {
+                    "method": "settings_save_init",
+                    "params": {"config_data": config_json["result"]["config_data"]}
+                }
+                try:
+                    deploy_resp = requests.post(
+                        config_url,
+                        json=deploy_payload,
+                        headers=config_headers,
+                        verify=False,
+                        timeout=10
+                    )
+                    if not deploy_resp or deploy_resp.status_code != 200:
+                        self.logger.error(f"Failed to deploy updated config to device at {domain}")
+                        raise Exception(f"Failed to deploy updated config to device at {domain}")
+                    self.logger.info(f"Successfully updated device config name to '{nautobot_name}' on device at {domain}")
+                    # --- Wait for reconnect (settings_save_reconnect) ---
+                    try:
+                        deploy_json = deploy_resp.json()
+                        session_id = deploy_json.get("result", {}).get("session_id")
+                        interval = deploy_json.get("result", {}).get("interval", 2)
+                        if session_id:
+                            reconnect_payload = {
+                                "method": "settings_save_reconnect",
+                                "params": {"session_id": session_id}
+                            }
+                            for attempt in range(30):
+                                try:
+                                    reconnect_resp = requests.post(
+                                        config_url,
+                                        json=reconnect_payload,
+                                        headers=config_headers,
+                                        verify=False,
+                                        timeout=10
+                                    )
+                                    if reconnect_resp and reconnect_resp.status_code == 200:
+                                        self.logger.info(f"[RECONNECT] {domain}: Success")
+                                        break
+                                    else:
+                                        self.logger.info(f"[RECONNECT] {domain}: Waiting ({attempt+1}/30)...")
+                                        import time
+                                        time.sleep(interval)
+                                except Exception as e:
+                                    self.logger.error(f"[RECONNECT] {domain}: Exception during reconnect: {e}")
+                                    import time
+                                    time.sleep(interval)
+                            else:
+                                self.logger.error(f"[RECONNECT] {domain}: Failed after retries")
+                    except Exception as e:
+                        self.logger.error(f"Exception during reconnect wait: {e}")
+                except Exception as e:
+                    self.logger.error(f"Exception during config deployment: {e}")
+                    raise Exception(f"Exception during config deployment: {e}")
+            else:
+                self.logger.info(f"Device name matches: '{nautobot_name}'")
         elif action == "delete":
             self.logger.info(f"Device {changed_object} was deleted. No ping attempted.")
 
