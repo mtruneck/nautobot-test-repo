@@ -51,27 +51,10 @@ class RacomDevicePing(Job):
             try:
                 resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, verify=False, timeout=10)
                 if resp.status_code == 200:
-                    try:
-                        json_data = resp.json()
-                        self.logger.debug(f"Response: {json_data}")
-                        # Accept as success if status==200 and msg contains OK
-                        if (
-                            str(json_data.get("status", "")) == "200"
-                            and "msg" in json_data
-                            and "OK" in json_data["msg"]
-                        ):
-                            self.logger.info(f"{device.name} ({domain}): API reachable and OK.")
-                            success_count += 1
-                        else:
-                            self.logger.warning(f"{device.name} ({domain}): API reachable but unexpected JSON content.")
-                            fail_count += 1
-                    except Exception as json_exc:
-                        self.logger.error(f"{device.name} ({domain}): Response is not valid JSON: {json_exc}")
-                        self.logger.debug(f"Raw response: {resp.text}")
-                        fail_count += 1
+                    self.logger.info(f"{device.name} ({domain}): API reachable.")
+                    success_count += 1
                 else:
                     self.logger.error(f"{device.name} ({domain}): API NOT reachable. Status: {resp.status_code}")
-                    self.logger.debug(f"Response: {resp.text}")
                     fail_count += 1
             except Exception as e:
                 self.logger.error(f"{device.name} ({domain}): Exception: {e}")
